@@ -433,6 +433,18 @@ async function startServer() {
       )
 
       const pushedRepos: string[] = []
+      // Build dist once so we can also push to gh-pages branch directly
+      execFileSync('npm', ['run', 'build'], { cwd: __dirname })
+      const tmpGhDir = '/tmp/gh-pages-live-deploy'
+      execFileSync(
+        'bash',
+        [
+          '-c',
+          `rm -rf "${tmpGhDir}" && mkdir -p "${tmpGhDir}" && cp -r dist/* "${tmpGhDir}/" && cp dist/index.html "${tmpGhDir}/404.html" && echo "lev-tech.net" > "${tmpGhDir}/CNAME" && touch "${tmpGhDir}/.nojekyll" && git -C "${tmpGhDir}" init && git -C "${tmpGhDir}" config user.email "kolin0308@gmail.com" && git -C "${tmpGhDir}" config user.name "kolin770" && git -C "${tmpGhDir}" checkout -b gh-pages && git -C "${tmpGhDir}" add -A && git -C "${tmpGhDir}" commit -m "Deploy compiled production bundle to gh-pages"`,
+        ],
+        { cwd: __dirname },
+      )
+
       for (const targetRepo of reposToPush) {
         try {
           const authRemoteUrl = `https://x-access-token:${encodeURIComponent(cleanToken)}@github.com/${targetRepo}.git`
@@ -445,41 +457,23 @@ async function startServer() {
               timeout: 25000,
             },
           )
+          execFileSync(
+            'git',
+            ['-C', tmpGhDir, 'push', authRemoteUrl, 'gh-pages:refs/heads/gh-pages', '--force'],
+            {
+              cwd: __dirname,
+              env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+              timeout: 25000,
+            },
+          )
           pushedRepos.push(targetRepo)
-
-          // Automatically enable GitHub Pages via GitHub Actions workflow + custom domain lev-tech.net on primary repo
-          if (targetRepo === cleanRepo) {
-            const ghHeaders = {
-              Authorization: `Bearer ${cleanToken}`,
-              Accept: 'application/vnd.github+json',
-              'Content-Type': 'application/json',
-              'X-GitHub-Api-Version': '2022-11-28',
-            }
-            await fetch(`https://api.github.com/repos/${targetRepo}/pages`, {
-              method: 'POST',
-              headers: ghHeaders,
-              body: JSON.stringify({
-                build_type: 'workflow',
-                source: { branch: targetBranch, path: '/' },
-              }),
-            }).catch(() => null)
-
-            await fetch(`https://api.github.com/repos/${targetRepo}/pages`, {
-              method: 'PUT',
-              headers: ghHeaders,
-              body: JSON.stringify({
-                build_type: 'workflow',
-                cname: 'lev-tech.net',
-                https_enforced: true,
-              }),
-            }).catch(() => null)
-          }
         } catch (repoErr) {
-          if (targetRepo === cleanRepo) {
+          if (targetRepo === cleanRepo && pushedRepos.length === 0) {
             throw repoErr
           }
         }
       }
+      execFileSync('rm', ['-rf', tmpGhDir])
 
       res.json({
         ok: true,
