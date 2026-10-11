@@ -332,17 +332,17 @@ async function startServer() {
   })
 
   /**
-   * 1-Click Compiled Netlify Dist ZIP Download (Drag & Drop directly into Netlify Deploys for lev-tech.net)
+   * 1-Click Compiled Dist ZIP Download (Ready for direct static hosting or GitHub Pages)
    */
   app.get('/api/export/netlify-dist.zip', (_req, res) => {
     try {
-      const distZipPath = '/tmp/lev-tech-netlify-dist.zip'
+      const distZipPath = '/tmp/lev-tech-dist.zip'
       execFileSync('npm', ['run', 'build'], { cwd: __dirname })
       execFileSync(
         'python3',
         [
           '-c',
-          `import shutil; shutil.make_archive('/tmp/lev-tech-netlify-dist', 'zip', '${path.join(
+          `import shutil; shutil.make_archive('/tmp/lev-tech-dist', 'zip', '${path.join(
             __dirname,
             'dist',
           )}')`,
@@ -353,19 +353,20 @@ async function startServer() {
       res.setHeader('Content-Type', 'application/zip')
       res.setHeader(
         'Content-Disposition',
-        'attachment; filename="lev-tech-net-deploy-dist.zip"',
+        'attachment; filename="lev-tech-net-production-dist.zip"',
       )
       res.send(buffer)
     } catch (err) {
-      console.error('Netlify dist ZIP error:', err)
-      res.status(500).json({ error: 'שגיאה ביצירת חבילת ה-Deploy ל-Netlify' })
+      console.error('Dist ZIP error:', err)
+      res.status(500).json({ error: 'שגיאה ביצירת חבילת ה-Build המוכנה' })
     }
   })
 
   /**
-   * 1-Click Direct GitHub Push Endpoint (Protected by X-CSRF-TOKEN, never stores token on disk)
+   * 1-Click Direct GitHub Force-Push & Auto-Publish Endpoint
+   * Pushes directly to GitHub without needing any local software, and configures GitHub Pages + Actions workflow.
    */
-  app.post('/api/github/push', (req, res) => {
+  app.post('/api/github/push', async (req, res) => {
     const csrfHeader = req.headers['x-csrf-token'] as string | undefined
     if (!validateCsrfToken(csrfHeader)) {
       res.status(403).json({
@@ -377,11 +378,13 @@ async function startServer() {
     const {
       githubToken = '',
       repo = 'kolin770/project-hosting',
+      syncBothRepos = true,
       branch = 'main',
-      commitMessage = 'Upgrade Lev-Tech Hosting: NVMe, WordPress, WooCommerce, 2FA, Live WHOIS & Secured SandBox',
+      commitMessage = 'Force Publish Lev-Tech Hosting: NVMe, WordPress, WooCommerce, 2FA, Live WHOIS & Secured SandBox',
     } = req.body as {
       githubToken?: string
       repo?: string
+      syncBothRepos?: boolean
       branch?: string
       commitMessage?: string
     }
@@ -420,21 +423,69 @@ async function startServer() {
         .toString()
         .trim()
 
-      const authRemoteUrl = `https://x-access-token:${encodeURIComponent(cleanToken)}@github.com/${cleanRepo}.git`
-      execFileSync(
-        'git',
-        ['push', authRemoteUrl, `HEAD:refs/heads/${branch.trim() || 'main'}`, '--force'],
-        {
-          cwd: __dirname,
-          env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
-          timeout: 25000,
-        },
+      const targetBranch = branch.trim() || 'main'
+      const reposToPush = Array.from(
+        new Set(
+          syncBothRepos
+            ? [cleanRepo, 'kolin770/project-hosting', 'kolin770/project-hosting-save-changes']
+            : [cleanRepo],
+        ),
       )
+
+      const pushedRepos: string[] = []
+      for (const targetRepo of reposToPush) {
+        try {
+          const authRemoteUrl = `https://x-access-token:${encodeURIComponent(cleanToken)}@github.com/${targetRepo}.git`
+          execFileSync(
+            'git',
+            ['push', authRemoteUrl, `HEAD:refs/heads/${targetBranch}`, '--force'],
+            {
+              cwd: __dirname,
+              env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+              timeout: 25000,
+            },
+          )
+          pushedRepos.push(targetRepo)
+
+          // Automatically enable GitHub Pages via GitHub Actions workflow + custom domain lev-tech.net on primary repo
+          if (targetRepo === cleanRepo) {
+            const ghHeaders = {
+              Authorization: `Bearer ${cleanToken}`,
+              Accept: 'application/vnd.github+json',
+              'Content-Type': 'application/json',
+              'X-GitHub-Api-Version': '2022-11-28',
+            }
+            await fetch(`https://api.github.com/repos/${targetRepo}/pages`, {
+              method: 'POST',
+              headers: ghHeaders,
+              body: JSON.stringify({
+                build_type: 'workflow',
+                source: { branch: targetBranch, path: '/' },
+              }),
+            }).catch(() => null)
+
+            await fetch(`https://api.github.com/repos/${targetRepo}/pages`, {
+              method: 'PUT',
+              headers: ghHeaders,
+              body: JSON.stringify({
+                build_type: 'workflow',
+                cname: 'lev-tech.net',
+                https_enforced: true,
+              }),
+            }).catch(() => null)
+          }
+        } catch (repoErr) {
+          if (targetRepo === cleanRepo) {
+            throw repoErr
+          }
+        }
+      }
 
       res.json({
         ok: true,
         repo: cleanRepo,
-        branch: branch.trim() || 'main',
+        pushedRepos,
+        branch: targetBranch,
         commitHash,
         repoUrl: `https://github.com/${cleanRepo}`,
       })

@@ -869,21 +869,32 @@ export function InternalSystemsPage({
           <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
             <div>
               <span className="font-mono text-xs font-bold text-cyan-300 uppercase" dir="ltr">
-                GITHUB & NETLIFY LIVE PUBLISHER
+                GITHUB FORCE PUSH & AUTO-PUBLISH ENGINE (NO SOFTWARE REQUIRED)
               </span>
               <h2 className="mt-1 text-xl font-extrabold text-white">
-                דחיפה ישירה ל-GitHub (`kolin770/project-hosting`) או הורדת חבילת קוד (ZIP)
+                דחיפה ישירה ו-Publish אוטומטי ל-GitHub (`lev-tech.net`) — ללא צורך בהתקנת תוכנה
               </h2>
+              <p className="mt-1 text-xs text-slate-300">
+                דוחף בפקודה אחת (`git push --force`) גם ל-
+                <code className="mx-1 rounded bg-slate-950 px-1.5 py-0.5 text-cyan-300" dir="ltr">
+                  kolin770/project-hosting
+                </code>
+                וגם ל-
+                <code className="mx-1 rounded bg-slate-950 px-1.5 py-0.5 text-cyan-300" dir="ltr">
+                  kolin770/project-hosting-save-changes
+                </code>
+                ומפעיל אוטומטית GitHub Actions Publish עבור <strong className="text-white">lev-tech.net</strong>.
+              </p>
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
               <a
                 href="/api/export/netlify-dist.zip"
-                download="lev-tech-net-deploy-dist.zip"
+                download="lev-tech-net-production-dist.zip"
                 className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-lg shadow-emerald-500/20 transition-transform hover:scale-105"
               >
                 <ExternalLink className="h-4 w-4" />
-                <span>הורד Deploy מוכן ל-Netlify (עבור lev-tech.net)</span>
+                <span>הורד גרסת Production מקומפלת (dist.zip)</span>
               </a>
               <a
                 href="/api/export/project.zip"
@@ -891,7 +902,7 @@ export function InternalSystemsPage({
                 className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-4 py-2.5 text-xs font-extrabold text-emerald-300 transition-colors hover:bg-emerald-500/25 hover:text-white"
               >
                 <ExternalLink className="h-4 w-4" />
-                <span>הורד קוד מקור מלא (Source ZIP)</span>
+                <span>הורד קוד מקור מלא ל-GitHub (Source ZIP)</span>
               </a>
             </div>
           </div>
@@ -902,7 +913,7 @@ export function InternalSystemsPage({
           >
             <div>
               <label className="block text-xs font-semibold text-slate-300">
-                מאגר יעד ב-GitHub (Repository)
+                מאגר יעד ב-GitHub (מסנכרן את שניהם אוטומטית)
               </label>
               <input
                 type="text"
@@ -927,9 +938,19 @@ export function InternalSystemsPage({
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300">
-                GitHub Personal Access Token (`ghp_...`)
-              </label>
+              <div className="flex items-center justify-between gap-2">
+                <label className="block text-xs font-semibold text-slate-300">
+                  GitHub Token (`ghp_...`)
+                </label>
+                <a
+                  href="https://github.com/settings/tokens/new?scopes=repo,workflow&description=LevTech-Force-Publish"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[11px] font-bold text-cyan-300 underline hover:text-white"
+                >
+                  צור טוקן ב-2 שניות ↗
+                </a>
+              </div>
               <input
                 type="password"
                 dir="ltr"
@@ -950,12 +971,12 @@ export function InternalSystemsPage({
                 {ghPushing ? (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
-                    <span>דוחף ל-GitHub...</span>
+                    <span>כופה דחיפה ו-Publish...</span>
                   </>
                 ) : (
                   <>
                     <Play className="h-4 w-4" />
-                    <span>בצע git push עכשיו</span>
+                    <span>כפה דחיפה ו-Publish עכשיו</span>
                   </>
                 )}
               </button>
