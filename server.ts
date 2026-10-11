@@ -1,6 +1,8 @@
 import express from 'express'
 import crypto from 'crypto'
 import path from 'path'
+import { execFileSync } from 'child_process'
+import { readFileSync } from 'fs'
 import { fileURLToPath } from 'url'
 import { createServer as createViteServer } from 'vite'
 import dotenv from 'dotenv'
@@ -293,6 +295,127 @@ async function startServer() {
       sandboxInstances.splice(idx, 1)
     }
     res.json({ ok: true })
+  })
+
+  /**
+   * 1-Click Clean Production ZIP Download (for GitHub / Netlify upload)
+   */
+  app.get('/api/export/project.zip', (_req, res) => {
+    try {
+      const zipPath = '/tmp/lev-tech-hosting-latest.zip'
+      execFileSync('git', ['add', '-A'], { cwd: __dirname })
+      try {
+        execFileSync(
+          'git',
+          ['commit', '-m', 'Sync latest Lev-Tech Hosting updates'],
+          { cwd: __dirname },
+        )
+      } catch {
+        // Nothing new to commit
+      }
+      execFileSync(
+        'git',
+        ['archive', '--format=zip', `--output=${zipPath}`, 'HEAD'],
+        { cwd: __dirname },
+      )
+      const buffer = readFileSync(zipPath)
+      res.setHeader('Content-Type', 'application/zip')
+      res.setHeader(
+        'Content-Disposition',
+        'attachment; filename="lev-tech-hosting-production.zip"',
+      )
+      res.send(buffer)
+    } catch (err) {
+      console.error('ZIP export error:', err)
+      res.status(500).json({ error: 'שגיאה ביצירת קובץ ה-ZIP' })
+    }
+  })
+
+  /**
+   * 1-Click Direct GitHub Push Endpoint (Protected by X-CSRF-TOKEN, never stores token on disk)
+   */
+  app.post('/api/github/push', (req, res) => {
+    const csrfHeader = req.headers['x-csrf-token'] as string | undefined
+    if (!validateCsrfToken(csrfHeader)) {
+      res.status(403).json({
+        error: 'בקשה נחסמה: אסימון אבטחה X-CSRF-TOKEN חסר או לא תקין.',
+      })
+      return
+    }
+
+    const {
+      githubToken = '',
+      repo = 'kolin770/project-hosting',
+      branch = 'main',
+      commitMessage = 'Upgrade Lev-Tech Hosting: NVMe, WordPress, WooCommerce, 2FA, Live WHOIS & Secured SandBox',
+    } = req.body as {
+      githubToken?: string
+      repo?: string
+      branch?: string
+      commitMessage?: string
+    }
+
+    const cleanToken = githubToken.trim()
+    const cleanRepo = repo
+      .trim()
+      .replace(/^https?:\/\/github\.com\//i, '')
+      .replace(/\.git$/i, '')
+
+    if (!cleanToken) {
+      res.status(400).json({
+        error: 'נא להזין GitHub Personal Access Token (ghp_...) לביצוע הדחיפה הישירה.',
+      })
+      return
+    }
+
+    if (!/^[a-zA-Z0-9_.-]+\/[a-zA-Z0-9_.-]+$/.test(cleanRepo)) {
+      res.status(400).json({
+        error: 'פורמט המאגר אינו תקין (נדרש למשל: kolin770/project-hosting)',
+      })
+      return
+    }
+
+    try {
+      execFileSync('git', ['add', '-A'], { cwd: __dirname })
+      try {
+        execFileSync('git', ['commit', '-m', commitMessage], { cwd: __dirname })
+      } catch {
+        // Already committed
+      }
+
+      const commitHash = execFileSync('git', ['rev-parse', '--short', 'HEAD'], {
+        cwd: __dirname,
+      })
+        .toString()
+        .trim()
+
+      const authRemoteUrl = `https://x-access-token:${encodeURIComponent(cleanToken)}@github.com/${cleanRepo}.git`
+      execFileSync(
+        'git',
+        ['push', authRemoteUrl, `HEAD:refs/heads/${branch.trim() || 'main'}`, '--force'],
+        {
+          cwd: __dirname,
+          env: { ...process.env, GIT_TERMINAL_PROMPT: '0' },
+          timeout: 25000,
+        },
+      )
+
+      res.json({
+        ok: true,
+        repo: cleanRepo,
+        branch: branch.trim() || 'main',
+        commitHash,
+        repoUrl: `https://github.com/${cleanRepo}`,
+      })
+    } catch (err) {
+      console.error('GitHub push failed')
+      const rawMsg = err instanceof Error ? err.message : 'Unknown error'
+      // Scrub token from any error output
+      const safeMsg = cleanToken ? rawMsg.split(cleanToken).join('***') : rawMsg
+      res.status(500).json({
+        error: `שגיאה בדחיפה ל-GitHub (וודא שהטוקן כולל הרשאת repo): ${safeMsg.slice(0, 180)}`,
+      })
+    }
   })
 
   /**

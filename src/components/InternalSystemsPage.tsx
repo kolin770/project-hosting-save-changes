@@ -436,6 +436,71 @@ export function InternalSystemsPage({
   const [activeTab, setActiveTab] = useState<CodeTabId>('mysql')
   const [copiedField, setCopiedField] = useState<string | null>(null)
 
+  // GitHub Direct Push State
+  const [ghRepo, setGhRepo] = useState('kolin770/project-hosting')
+  const [ghBranch, setGhBranch] = useState('main')
+  const [ghToken, setGhToken] = useState('')
+  const [ghPushing, setGhPushing] = useState(false)
+  const [ghResult, setGhResult] = useState<{
+    ok: boolean
+    message: string
+    repoUrl?: string
+  } | null>(null)
+
+  const handleDirectGitHubPush = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!ghToken.trim() || ghPushing) return
+    setGhPushing(true)
+    setGhResult(null)
+    try {
+      let token = csrfToken
+      if (!token) {
+        const r = await fetch('/api/csrf-token')
+        const d = (await r.json()) as { csrfToken?: string }
+        token = d.csrfToken || ''
+        setCsrfToken(token)
+      }
+      const resp = await fetch('/api/github/push', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-TOKEN': token,
+        },
+        body: JSON.stringify({
+          githubToken: ghToken.trim(),
+          repo: ghRepo.trim(),
+          branch: ghBranch.trim() || 'main',
+        }),
+      })
+      const data = (await resp.json()) as {
+        ok?: boolean
+        commitHash?: string
+        repoUrl?: string
+        error?: string
+      }
+      if (!resp.ok || !data.ok) {
+        setGhResult({
+          ok: false,
+          message: data.error || 'שגיאה בדחיפת הקוד ל-GitHub',
+        })
+      } else {
+        setGhToken('') // Clear token from memory immediately after push
+        setGhResult({
+          ok: true,
+          message: `הקוד נדחף בהצלחה לענף ${ghBranch} (Commit: ${data.commitHash})!`,
+          repoUrl: data.repoUrl,
+        })
+      }
+    } catch {
+      setGhResult({
+        ok: false,
+        message: 'שגיאת תקשורת בביצוע הדחיפה ל-GitHub',
+      })
+    } finally {
+      setGhPushing(false)
+    }
+  }
+
   const fetchInitialData = useCallback(async () => {
     try {
       const [csrfRes, sbxRes] = await Promise.all([
@@ -778,6 +843,120 @@ export function InternalSystemsPage({
               </form>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* 1-Click GitHub Direct Push & Production ZIP Export */}
+      <section className="mx-auto max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
+        <div className="rounded-2xl border border-cyan-400/35 bg-slate-900/90 p-6 shadow-2xl">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+            <div>
+              <span className="font-mono text-xs font-bold text-cyan-300 uppercase" dir="ltr">
+                GITHUB & NETLIFY LIVE PUBLISHER
+              </span>
+              <h2 className="mt-1 text-xl font-extrabold text-white">
+                דחיפה ישירה ל-GitHub (`kolin770/project-hosting`) או הורדת חבילת קוד (ZIP)
+              </h2>
+            </div>
+
+            <a
+              href="/api/export/project.zip"
+              download="lev-tech-hosting-production.zip"
+              className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-5 py-2.5 text-xs font-extrabold text-emerald-300 transition-colors hover:bg-emerald-500/25 hover:text-white"
+            >
+              <ExternalLink className="h-4 w-4" />
+              <span>הורד קובץ ZIP מלא ומוכן ל-GitHub / Netlify (לחיצה אחת)</span>
+            </a>
+          </div>
+
+          <form
+            onSubmit={handleDirectGitHubPush}
+            className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-4"
+          >
+            <div>
+              <label className="block text-xs font-semibold text-slate-300">
+                מאגר יעד ב-GitHub (Repository)
+              </label>
+              <input
+                type="text"
+                dir="ltr"
+                required
+                value={ghRepo}
+                onChange={(e) => setGhRepo(e.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-white/15 bg-slate-950 px-3.5 py-2.5 text-left font-mono text-sm text-white focus:border-cyan-400 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300">ענף (Branch)</label>
+              <input
+                type="text"
+                dir="ltr"
+                required
+                value={ghBranch}
+                onChange={(e) => setGhBranch(e.target.value)}
+                className="mt-1.5 w-full rounded-xl border border-white/15 bg-slate-950 px-3.5 py-2.5 text-left font-mono text-sm text-white focus:border-cyan-400 focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-300">
+                GitHub Personal Access Token (`ghp_...`)
+              </label>
+              <input
+                type="password"
+                dir="ltr"
+                required
+                value={ghToken}
+                onChange={(e) => setGhToken(e.target.value)}
+                placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+                className="mt-1.5 w-full rounded-xl border border-white/15 bg-slate-950 px-3.5 py-2.5 text-left font-mono text-sm text-white focus:border-cyan-400 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-end">
+              <button
+                type="submit"
+                disabled={ghPushing}
+                className="inline-flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-cyan-400 to-blue-600 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-cyan-500/25 transition-all hover:shadow-cyan-400/40 disabled:opacity-60"
+              >
+                {ghPushing ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <span>דוחף ל-GitHub...</span>
+                  </>
+                ) : (
+                  <>
+                    <Play className="h-4 w-4" />
+                    <span>בצע git push עכשיו</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+
+          {ghResult && (
+            <div
+              className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border px-4 py-3 text-xs font-bold ${
+                ghResult.ok
+                  ? 'border-emerald-400/35 bg-emerald-500/10 text-emerald-200'
+                  : 'border-rose-500/35 bg-rose-500/10 text-rose-200'
+              }`}
+            >
+              <span>{ghResult.message}</span>
+              {ghResult.repoUrl && (
+                <a
+                  href={ghResult.repoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 underline hover:text-white"
+                >
+                  <span>צפה במאגר המעודכן ב-GitHub</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              )}
+            </div>
+          )}
         </div>
       </section>
 
