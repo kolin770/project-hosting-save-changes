@@ -415,13 +415,30 @@ export async function callIsolatedSandboxApi(
   },
 ]
 
+const DEFAULT_SANDBOX: SandboxInstance = {
+  id: 'sbx-7f9a2c10',
+  name: 'Core Billing & CRM Sandbox',
+  genericDomain: 'https://sbx-7f9a2c10.sbx-cloud-dev.net',
+  baseZone: 'sbx-cloud-dev.net',
+  stack: 'PHP 8.3-FPM + MySQL 8.0 + Python 3.12 Worker',
+  isolationMode: 'Zero-Trust mTLS + Network Namespace Isolation',
+  containerId: 'lxc-sbx-7f9a2c10',
+  privateIp: '10.244.18.12',
+  mysqlDatabase: 'sbx_db_7f9a2c',
+  mysqlUser: 'sbx_usr_7f9a',
+  accessToken: 'sbx_live_98c4f1a0b3e7d2194f8a',
+  ttlHours: 24,
+  status: 'isolated_active',
+  createdAt: new Date().toISOString(),
+}
+
 export function InternalSystemsPage({
   onNavigate,
 }: {
   onNavigate: (page: PageRoute, href?: string) => void
 }) {
-  const [sandboxes, setSandboxes] = useState<SandboxInstance[]>([])
-  const [selectedSandboxId, setSelectedSandboxId] = useState<string>('')
+  const [sandboxes, setSandboxes] = useState<SandboxInstance[]>([DEFAULT_SANDBOX])
+  const [selectedSandboxId, setSelectedSandboxId] = useState<string>(DEFAULT_SANDBOX.id)
   const [csrfToken, setCsrfToken] = useState<string>('')
   const [creating, setCreating] = useState(false)
 

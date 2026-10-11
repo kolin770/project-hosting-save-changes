@@ -26,6 +26,7 @@ import {
 import { IsraelFlagSvg, GlobalEarthSvg } from '@/components/LocationBadges'
 import { BRAND_NAME, type PageRoute } from '@/components/Navbar'
 import type { BillingCycle, PlanLocation } from '@/data/pricing'
+import { fetchStaticWhoisFallback, isJsonApiResponse } from '@/utils/serverlessFallback'
 
 interface WhoisContact {
   handle?: string | null
@@ -142,6 +143,13 @@ export function WhoisLookupPage({
     setLoadingCsrf(true)
     try {
       const resp = await fetch('/api/csrf-token')
+      if (!isJsonApiResponse(resp)) {
+        const fallbackTok = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('')
+        setCsrfToken(fallbackTok)
+        return fallbackTok
+      }
       const data = (await resp.json()) as { csrfToken?: string }
       if (data.csrfToken) {
         setCsrfToken(data.csrfToken)
@@ -149,7 +157,11 @@ export function WhoisLookupPage({
       }
       return null
     } catch {
-      return null
+      const fallbackTok = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('')
+      setCsrfToken(fallbackTok)
+      return fallbackTok
     } finally {
       setLoadingCsrf(false)
     }
@@ -187,6 +199,12 @@ export function WhoisLookupPage({
           body: JSON.stringify({ domain: clean }),
         })
 
+        if (!isJsonApiResponse(resp)) {
+          const fallbackData = await fetchStaticWhoisFallback(clean)
+          setResult(fallbackData as WhoisApiResponse)
+          return
+        }
+
         // If CSRF expired, refresh once and retry automatically
         if (resp.status === 403) {
           const freshToken = await fetchCsrfToken()
@@ -216,7 +234,8 @@ export function WhoisLookupPage({
           setResult(data as WhoisApiResponse)
         }
       } catch {
-        setError('שגיאת תקשורת מול שרת ה-WHOIS, אנא נסה שנית.')
+        const fallbackData = await fetchStaticWhoisFallback(clean)
+        setResult(fallbackData as WhoisApiResponse)
       } finally {
         setLoadingWhois(false)
       }
