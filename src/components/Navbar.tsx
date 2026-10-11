@@ -41,6 +41,7 @@ export type PageRoute =
   | 'domains-whois'
   | 'secured-sandbox'
   | 'client-portal'
+  | 'checkout'
 
 type NavChild = {
   label: string
@@ -558,7 +559,21 @@ function MobileDrawer({
                 className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-cyan-400 to-blue-600 px-4 py-3 font-bold text-white shadow-lg shadow-cyan-500/25"
               >
                 <LogIn className="h-4 w-4" aria-hidden />
-                אזור לקוחות / התחברות
+                אזור לקוחות / התחברות (WHMCS)
+              </a>
+              <a
+                href="#checkout"
+                onClick={(e) => {
+                  onClose()
+                  if (onNavigate) {
+                    e.preventDefault()
+                    onNavigate('checkout', '#checkout')
+                  }
+                }}
+                className="flex items-center justify-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-4 py-3 text-sm font-bold text-cyan-200 hover:bg-cyan-500/20"
+              >
+                <ShoppingCart className="h-4 w-4" aria-hidden />
+                עמוד תשלום והשלמת הזמנה (Checkout)
               </a>
               <a
                 href={OPEN_TICKET_URL}
@@ -579,11 +594,13 @@ function MobileDrawer({
 export function Navbar({
   activePage = 'home',
   authenticatedUser,
+  cartCount = 1,
   onNavigate,
   onTrigger2FA,
 }: {
   activePage?: PageRoute
   authenticatedUser?: AuthenticatedUser | null
+  cartCount?: number
   onNavigate?: (page: PageRoute, href?: string) => void
   onTrigger2FA?: (challenge: TwoFactorChallenge) => void
 }) {
@@ -685,6 +702,26 @@ export function Navbar({
         </div>
 
         <div className="hidden shrink-0 items-center gap-2.5 lg:flex">
+          <button
+            type="button"
+            onClick={() => onNavigate?.('checkout', '#checkout')}
+            aria-label="עמוד תשלום וסל הזמנות (WHMCS Checkout)"
+            title="עמוד תשלום והשלמת הזמנה (Checkout)"
+            className={`relative inline-flex cursor-pointer items-center gap-2 rounded-xl border px-3.5 py-2.5 text-xs font-bold transition-all ${
+              activePage === 'checkout'
+                ? 'border-cyan-400 bg-cyan-500/20 text-white shadow-sm shadow-cyan-500/25'
+                : 'border-white/15 bg-white/[0.04] text-slate-200 hover:border-cyan-400/40 hover:bg-white/10 hover:text-white'
+            }`}
+          >
+            <ShoppingCart className="h-4 w-4 text-cyan-300" aria-hidden />
+            <span>Checkout</span>
+            {cartCount > 0 && (
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-cyan-400 px-1.5 font-mono text-[11px] font-extrabold text-slate-950">
+                {cartCount}
+              </span>
+            )}
+          </button>
+
           <a
             href={OPEN_TICKET_URL}
             aria-label="פתיחת פניה לתמיכה"

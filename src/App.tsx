@@ -31,6 +31,7 @@ import {
   type AuthenticatedUser,
   type TwoFactorChallenge,
 } from '@/components/ClientAuth'
+import { WhmcsCheckoutPage, type CartItem } from '@/components/WhmcsCheckoutPage'
 import { GlobalEarthSvg, IsraelFlagSvg } from '@/components/LocationBadges'
 import { monthlyPriceFor, type BillingCycle, type PlanLocation, type PricingPlan } from '@/data/pricing'
 
@@ -85,6 +86,7 @@ function resolveHashPage(hash: string): PageRoute {
   if (hash.startsWith('#domains-whois') || hash.startsWith('#whois')) return 'domains-whois'
   if (hash.startsWith('#secured-sandbox') || hash.startsWith('#sandbox')) return 'secured-sandbox'
   if (hash.startsWith('#client-portal')) return 'client-portal'
+  if (hash.startsWith('#checkout') || hash.startsWith('#order')) return 'checkout'
   return 'home'
 }
 
@@ -94,6 +96,18 @@ export default function App() {
   )
   const [twoFactorChallenge, setTwoFactorChallenge] = useState<TwoFactorChallenge | null>(null)
   const [authenticatedUser, setAuthenticatedUser] = useState<AuthenticatedUser | null>(null)
+  const [cartItems, setCartItems] = useState<CartItem[]>([
+    {
+      id: 'default_nvme_pro',
+      title: 'אחסון NVMe פרימיום Pro · WHMCS Business',
+      category: 'Enterprise NVMe Hosting · LiteSpeed + cPanel',
+      priceMonthly: 69,
+      cycle: 'monthly',
+      location: 'il',
+      ipAddress: '185.199.108.153 (IL Tier-III)',
+      domain: 'lev-tech.net',
+    },
+  ])
   const [orderModal, setOrderModal] = useState<OrderSelection | null>(null)
   const [orderSubmitted, setOrderSubmitted] = useState(false)
   const [customerName, setCustomerName] = useState('')
@@ -113,6 +127,8 @@ export default function App() {
         h.startsWith('#secured-sandbox') ||
         h.startsWith('#sandbox') ||
         h.startsWith('#client-portal') ||
+        h.startsWith('#checkout') ||
+        h.startsWith('#order') ||
         h === '#home' ||
         h === ''
       ) {
@@ -146,6 +162,9 @@ export default function App() {
     } else if (page === 'client-portal') {
       window.history.pushState(null, '', '#client-portal')
       window.scrollTo({ top: 0, behavior: 'smooth' })
+    } else if (page === 'checkout') {
+      window.history.pushState(null, '', '#checkout')
+      window.scrollTo({ top: 0, behavior: 'smooth' })
     } else {
       window.history.pushState(null, '', href || '#home')
       if (!href || href === '#home' || href === '/') {
@@ -160,8 +179,21 @@ export default function App() {
   }
 
   const openOrderModal = (selection: OrderSelection) => {
-    setOrderSubmitted(false)
-    setOrderModal(selection)
+    const newItem: CartItem = {
+      id: `item_${Date.now()}`,
+      title: selection.title,
+      category: 'Managed Cloud & NVMe Infrastructure',
+      priceMonthly: selection.price,
+      cycle: selection.cycle,
+      location: selection.location,
+      ipAddress:
+        selection.location === 'il'
+          ? '185.199.108.153 (IL Tier-III)'
+          : '185.199.109.153 (EU Tier-III)',
+      domain: 'lev-tech.net',
+    }
+    setCartItems([newItem])
+    handleNavigate('checkout', '#checkout')
   }
 
   const handleOrderSubmit = (e: React.FormEvent) => {
@@ -176,6 +208,7 @@ export default function App() {
       <Navbar
         activePage={activePage}
         authenticatedUser={authenticatedUser}
+        cartCount={cartItems.length}
         onNavigate={handleNavigate}
         onTrigger2FA={(challenge) => setTwoFactorChallenge(challenge)}
       />
@@ -225,6 +258,26 @@ export default function App() {
             onSuccessChallenge={(challenge) => setTwoFactorChallenge(challenge)}
             onVerifiedUser={(user) => setAuthenticatedUser(user)}
             onLogout={() => setAuthenticatedUser(null)}
+          />
+        ) : activePage === 'checkout' ? (
+          <WhmcsCheckoutPage
+            items={cartItems}
+            authenticatedUser={authenticatedUser}
+            onUpdateItems={setCartItems}
+            onNavigate={handleNavigate}
+            onSuccessChallenge={(challenge) => setTwoFactorChallenge(challenge)}
+            onOrderCompleted={(orderData) => {
+              if (!authenticatedUser) {
+                setAuthenticatedUser({
+                  username: orderData.customerEmail,
+                  displayName: orderData.customerName,
+                  plan: orderData.items[0]?.title || 'אחסון NVMe פרימיום Pro',
+                  activeServices: orderData.items.length,
+                  activeDomains: 1,
+                  openTickets: 0,
+                })
+              }
+            }}
           />
         ) : (
           <>
@@ -614,7 +667,16 @@ export default function App() {
                     onClick={() => handleNavigate('client-portal', '#client-portal')}
                     className="cursor-pointer font-semibold text-cyan-300 transition-colors hover:text-white"
                   >
-                    כניסה לאזור לקוחות (2FA TOTP)
+                    כניסה לאזור לקוחות (WHMCS 2FA)
+                  </button>
+                </li>
+                <li>
+                  <button
+                    type="button"
+                    onClick={() => handleNavigate('checkout', '#checkout')}
+                    className="cursor-pointer font-semibold text-slate-300 transition-colors hover:text-cyan-300"
+                  >
+                    עמוד תשלום והשלמת הזמנה (Checkout)
                   </button>
                 </li>
                 <li>

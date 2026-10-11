@@ -168,12 +168,65 @@ export function ClientLoginForm({
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [forgotMessage, setForgotMessage] = useState(false)
+  const [mode, setMode] = useState<'login' | 'forgot_request' | 'forgot_verify'>('login')
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetCode, setResetCode] = useState('')
+  const [generatedResetCode, setGeneratedResetCode] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmNewPassword, setConfirmNewPassword] = useState('')
+  const [resetSuccessMessage, setResetSuccessMessage] = useState<string | null>(null)
+
+  const handleRequestPasswordReset = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    const targetEmail = (resetEmail || username).trim()
+    if (!targetEmail || !targetEmail.includes('@')) {
+      setError('נא להזין כתובת דוא״ל תקינה המשויכת לחשבון ה-WHMCS שלך')
+      return
+    }
+    setLoading(true)
+    setTimeout(() => {
+      const code = String(Math.floor(100000 + Math.random() * 900000))
+      setGeneratedResetCode(code)
+      setResetEmail(targetEmail)
+      setLoading(false)
+      setMode('forgot_verify')
+    }, 500)
+  }
+
+  const handleConfirmPasswordReset = (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+    if (resetCode.trim().length !== 6) {
+      setError('נא להזין את קוד האימות בן 6 הספרות שנשלח לדוא״ל')
+      return
+    }
+    if (generatedResetCode && resetCode.trim() !== generatedResetCode) {
+      setError('קוד האיפוס שהוזן שגוי. ניתן ללחוץ על כפתור השליפה המהירה למטה.')
+      return
+    }
+    if (newPassword.length < 6) {
+      setError('הסיסמה החדשה חייבת להכיל לפחות 6 תווים')
+      return
+    }
+    if (newPassword !== confirmNewPassword) {
+      setError('הסיסמאות שהוזנו אינן תואמות')
+      return
+    }
+    setLoading(true)
+    setTimeout(() => {
+      setLoading(false)
+      setUsername(resetEmail)
+      setPassword(newPassword)
+      setResetSuccessMessage('הסיסמה אופסה בהצלחה במערכת WHMCS! כעת ניתן להתחבר עם הסיסמה החדשה.')
+      setMode('login')
+    }, 500)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
-    setForgotMessage(false)
+    setResetSuccessMessage(null)
 
     if (!username.trim() || !password.trim()) {
       setError('נא להזין שם משתמש / אימייל וסיסמה')
@@ -223,6 +276,168 @@ export function ClientLoginForm({
     }
   }
 
+  if (mode === 'forgot_request') {
+    return (
+      <form onSubmit={handleRequestPasswordReset} className="space-y-4" dir="rtl">
+        <div className="rounded-xl border border-cyan-400/25 bg-cyan-500/10 px-3.5 py-2.5 text-xs leading-5 text-cyan-100">
+          <strong className="block font-extrabold text-cyan-300">
+            שחזור סיסמה · WHMCS Client Area
+          </strong>
+          הזן את כתובת הדוא״ל המשויכת לחשבון שלך ונשלח אליך קוד אימות חד-פעמי לאיפוס הסיסמה.
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-medium text-rose-200">
+            <ShieldAlert className="h-4 w-4 shrink-0 text-rose-400" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div>
+          <label className="mb-1.5 block text-xs font-bold text-slate-200">
+            כתובת דוא״ל רשומה במערכת
+          </label>
+          <div className="group relative flex items-stretch overflow-hidden rounded-xl border border-white/15 bg-slate-900/90 focus-within:border-cyan-400">
+            <span className="flex w-11 shrink-0 items-center justify-center border-l border-white/10 bg-white/[0.04] text-cyan-300">
+              <User className="h-4 w-4" aria-hidden />
+            </span>
+            <input
+              type="email"
+              required
+              dir="ltr"
+              value={resetEmail || username}
+              onChange={(e) => setResetEmail(e.target.value)}
+              placeholder="client@domain.co.il"
+              className="w-full bg-transparent px-3.5 py-2.5 text-right text-sm text-white placeholder-slate-500 focus:outline-none"
+            />
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-cyan-400 to-blue-600 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-cyan-500/30 transition-all hover:shadow-cyan-400/50 disabled:opacity-60"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>שולח קוד שחזור משרת ה-WHMCS...</span>
+            </>
+          ) : (
+            <>
+              <KeyRound className="h-4 w-4" />
+              <span>שלח קוד לאיפוס סיסמה</span>
+            </>
+          )}
+        </button>
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => {
+              setError(null)
+              setMode('login')
+            }}
+            className="cursor-pointer text-xs font-bold text-slate-400 hover:text-cyan-300"
+          >
+            חזרה למסך ההתחברות
+          </button>
+        </div>
+      </form>
+    )
+  }
+
+  if (mode === 'forgot_verify') {
+    return (
+      <form onSubmit={handleConfirmPasswordReset} className="space-y-4" dir="rtl">
+        <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-3.5 py-2.5 text-xs leading-5 text-emerald-100">
+          קוד איפוס בן 6 ספרות נשלח אל <span className="font-mono font-bold">{resetEmail}</span>.
+          <div className="mt-1.5 flex items-center justify-between border-t border-white/10 pt-1.5">
+            <span className="text-[11px] text-emerald-300">קוד אימות שהופק בשרת:</span>
+            <button
+              type="button"
+              onClick={() => setResetCode(generatedResetCode)}
+              className="cursor-pointer rounded bg-emerald-400/20 px-2 py-0.5 font-mono text-xs font-extrabold text-emerald-200 hover:bg-emerald-400/30"
+            >
+              {generatedResetCode} (לחץ להזנה אוטומטית)
+            </button>
+          </div>
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 text-xs font-medium text-rose-200">
+            <ShieldAlert className="h-4 w-4 shrink-0 text-rose-400" />
+            <span>{error}</span>
+          </div>
+        )}
+
+        <div>
+          <label className="mb-1.5 block text-xs font-bold text-slate-200">
+            קוד אימות (6 ספרות)
+          </label>
+          <input
+            type="text"
+            inputMode="numeric"
+            maxLength={6}
+            required
+            dir="ltr"
+            value={resetCode}
+            onChange={(e) => setResetCode(e.target.value.replace(/\D/g, ''))}
+            placeholder="000000"
+            className="w-full rounded-xl border border-white/15 bg-slate-900 px-3.5 py-2.5 text-center font-mono text-base font-extrabold tracking-widest text-white focus:border-cyan-400 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-bold text-slate-200">
+            סיסמה חדשה
+          </label>
+          <input
+            type="password"
+            required
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="••••••••••••"
+            className="w-full rounded-xl border border-white/15 bg-slate-900 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-xs font-bold text-slate-200">
+            אימות סיסמה חדשה
+          </label>
+          <input
+            type="password"
+            required
+            value={confirmNewPassword}
+            onChange={(e) => setConfirmNewPassword(e.target.value)}
+            placeholder="••••••••••••"
+            className="w-full rounded-xl border border-white/15 bg-slate-900 px-3.5 py-2.5 text-sm text-white placeholder-slate-500 focus:border-cyan-400 focus:outline-none"
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-l from-emerald-400 to-cyan-600 px-5 py-3 text-sm font-extrabold text-slate-950 shadow-lg shadow-emerald-500/25 transition-all hover:opacity-95"
+        >
+          <CheckCircle2 className="h-4 w-4" />
+          <span>שמור סיסמה חדשה וחזור להתחברות</span>
+        </button>
+
+        <div className="text-center">
+          <button
+            type="button"
+            onClick={() => setMode('login')}
+            className="cursor-pointer text-xs font-bold text-slate-400 hover:text-cyan-300"
+          >
+            ביטול וחזרה להתחברות
+          </button>
+        </div>
+      </form>
+    )
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4" dir="rtl">
       {error && (
@@ -232,9 +447,10 @@ export function ClientLoginForm({
         </div>
       )}
 
-      {forgotMessage && (
-        <div className="rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-2.5 text-xs leading-5 text-cyan-100">
-          קישור לאיפוס סיסמה יישלח לכתובת הדוא״ל המשויכת לחשבון הלקוח שלך.
+      {resetSuccessMessage && (
+        <div className="flex items-center gap-2 rounded-xl border border-emerald-400/35 bg-emerald-500/15 px-3.5 py-2.5 text-xs font-bold text-emerald-200">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+          <span>{resetSuccessMessage}</span>
         </div>
       )}
 
@@ -265,7 +481,11 @@ export function ClientLoginForm({
           <label className="text-xs font-bold text-slate-200">סיסמה</label>
           <button
             type="button"
-            onClick={() => setForgotMessage((v) => !v)}
+            onClick={() => {
+              setError(null)
+              setResetEmail(username)
+              setMode('forgot_request')
+            }}
             className="cursor-pointer text-xs font-semibold text-cyan-300 transition-colors hover:text-white"
           >
             שכחת סיסמה?
@@ -737,14 +957,24 @@ export function ClientPortalPage({
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={onLogout}
-            className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-slate-200 transition-colors hover:bg-rose-500/20 hover:border-rose-400/40 hover:text-white"
-          >
-            <LogOut className="h-4 w-4" />
-            התנתקות
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => onNavigate('checkout', '#checkout')}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-gradient-to-l from-cyan-400 to-blue-600 px-4 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-cyan-500/25 transition-all hover:-translate-y-0.5"
+            >
+              <span>עמוד תשלום והזמנת שירות (WHMCS Checkout)</span>
+              <ArrowLeft className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={onLogout}
+              className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-bold text-slate-200 transition-colors hover:bg-rose-500/20 hover:border-rose-400/40 hover:text-white"
+            >
+              <LogOut className="h-4 w-4" />
+              התנתקות
+            </button>
+          </div>
         </div>
 
         {/* Client Portal KPI Strip */}
@@ -848,6 +1078,18 @@ export function ClientPortalPage({
           </div>
 
           <ClientLoginForm onSuccessChallenge={onSuccessChallenge} />
+
+          <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5 text-xs">
+            <span className="text-slate-400">מעוניין להזמין שירות אחסון או דומיין חדש?</span>
+            <button
+              type="button"
+              onClick={() => onNavigate('checkout', '#checkout')}
+              className="inline-flex cursor-pointer items-center gap-1.5 font-extrabold text-cyan-300 transition-colors hover:text-white"
+            >
+              <span>מעבר לעמוד תשלום והשלמת הזמנה (WHMCS Checkout)</span>
+              <ArrowLeft className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* Side Info Panel + Interactive 2FA Setup Component */}
