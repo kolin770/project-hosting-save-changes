@@ -876,14 +876,24 @@ export function InternalSystemsPage({
               </h2>
             </div>
 
-            <a
-              href="/api/export/project.zip"
-              download="lev-tech-hosting-production.zip"
-              className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-5 py-2.5 text-xs font-extrabold text-emerald-300 transition-colors hover:bg-emerald-500/25 hover:text-white"
-            >
-              <ExternalLink className="h-4 w-4" />
-              <span>הורד קובץ ZIP מלא ומוכן ל-GitHub / Netlify (לחיצה אחת)</span>
-            </a>
+            <div className="flex flex-wrap items-center gap-2">
+              <a
+                href="/api/export/netlify-dist.zip"
+                download="lev-tech-net-deploy-dist.zip"
+                className="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-4 py-2.5 text-xs font-extrabold text-slate-950 shadow-lg shadow-emerald-500/20 transition-transform hover:scale-105"
+              >
+                <ExternalLink className="h-4 w-4" />
+                <span>הורד Deploy מוכן ל-Netlify (עבור lev-tech.net)</span>
+              </a>
+              <a
+                href="/api/export/project.zip"
+                download="lev-tech-hosting-production.zip"
+                className="inline-flex items-center gap-2 rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-4 py-2.5 text-xs font-extrabold text-emerald-300 transition-colors hover:bg-emerald-500/25 hover:text-white"
+              >
+                <ExternalLink className="h-4 w-4" />
+                <span>הורד קוד מקור מלא (Source ZIP)</span>
+              </a>
+            </div>
           </div>
 
           <form

@@ -332,6 +332,37 @@ async function startServer() {
   })
 
   /**
+   * 1-Click Compiled Netlify Dist ZIP Download (Drag & Drop directly into Netlify Deploys for lev-tech.net)
+   */
+  app.get('/api/export/netlify-dist.zip', (_req, res) => {
+    try {
+      const distZipPath = '/tmp/lev-tech-netlify-dist.zip'
+      execFileSync('npm', ['run', 'build'], { cwd: __dirname })
+      execFileSync(
+        'python3',
+        [
+          '-c',
+          `import shutil; shutil.make_archive('/tmp/lev-tech-netlify-dist', 'zip', '${path.join(
+            __dirname,
+            'dist',
+          )}')`,
+        ],
+        { cwd: __dirname },
+      )
+      const buffer = readFileSync(distZipPath)
+      res.setHeader('Content-Type', 'application/zip')
+      res.setHeader(
+        'Content-Disposition',
+        'attachment; filename="lev-tech-net-deploy-dist.zip"',
+      )
+      res.send(buffer)
+    } catch (err) {
+      console.error('Netlify dist ZIP error:', err)
+      res.status(500).json({ error: 'שגיאה ביצירת חבילת ה-Deploy ל-Netlify' })
+    }
+  })
+
+  /**
    * 1-Click Direct GitHub Push Endpoint (Protected by X-CSRF-TOKEN, never stores token on disk)
    */
   app.post('/api/github/push', (req, res) => {
