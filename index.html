@@ -40,16 +40,49 @@
     <!-- End Google tag -->
 
     <style>
-      /* Cookie banner styles (simple, RTL-friendly) */
-      #cookie-banner{
-        position:fixed;left:0;right:0;bottom:0;z-index:9999;display:flex;align-items:center;justify-content:space-between;padding:16px;background:rgba(0,0,0,0.85);color:#fff;font-family:Heebo, Arial, sans-serif;gap:12px;flex-wrap:wrap
+      /* Enhanced cookie banner styles (RTL, matches site font Heebo) */
+      :root{
+        --cookie-bg: #ffffff; /* light card */
+        --cookie-text:#111827;
+        --accent: #1a73e8; /* Google blue */
+        --muted: rgba(17,24,39,0.6);
       }
-      #cookie-banner .content{flex:1;min-width:200px}
-      #cookie-banner .actions{display:flex;gap:8px}
-      #cookie-banner button{border:0;padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:600}
-      #cookie-banner .accept{background:#1a73e8;color:#fff}
-      #cookie-banner .reject{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.2)}
-      @media (max-width:480px){#cookie-banner{padding:12px;font-size:14px}}
+      .cookie-wrap{
+        position:fixed;
+        inset:auto 16px 24px 16px; /* top right bottom left in RTL layout */
+        z-index:9999;
+        display:flex;gap:12px;align-items:center;box-shadow:0 8px 30px rgba(2,6,23,0.2);backdrop-filter:blur(6px);
+        border-radius:12px;padding:18px 18px;max-width:960px;width:calc(100% - 32px);background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(250,250,250,0.95));font-family:Heebo, Arial, sans-serif;direction:rtl
+      }
+      .cookie-wrap .info{flex:1;min-width:200px}
+      .cookie-wrap .info h4{margin:0 0 6px 0;font-size:16px;color:var(--cookie-text)}
+      .cookie-wrap .info p{margin:0;color:var(--muted);font-size:14px}
+      .cookie-actions{display:flex;gap:10px;align-items:center}
+      .btn{padding:10px 14px;border-radius:8px;border:0;cursor:pointer;font-weight:700}
+      .btn-accept{background:var(--accent);color:#fff;box-shadow:0 6px 18px rgba(26,115,232,0.18);}
+      .btn-manage{background:transparent;color:var(--accent);border:1px solid rgba(26,115,232,0.14);}
+      .btn-reject{background:transparent;color:var(--muted);border:1px solid rgba(0,0,0,0.06)}
+
+      /* Settings modal */
+      .cookie-modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:none;align-items:center;justify-content:center;z-index:10000}
+      .cookie-modal{background:var(--cookie-bg);border-radius:12px;padding:20px;max-width:720px;width:92%;box-shadow:0 12px 40px rgba(2,6,23,0.3);animation:modalIn .36s ease-out both}
+      .modal-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.05)}
+      .modal-row:last-child{border-bottom:0}
+      .switch{position:relative;width:48px;height:28px;border-radius:18px;background:#e6e7eb;cursor:pointer}
+      .switch .knob{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 4px 10px rgba(2,6,23,0.12);transition:transform .22s}
+      .switch.on{background:var(--accent)}
+      .switch.on .knob{transform:translateX(20px)}
+
+      /* Animations */
+      @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
+      @keyframes modalIn{from{transform:translateY(8px) scale(.98);opacity:0}to{transform:none;opacity:1}}
+      .cookie-wrap{animation:slideUp .36s cubic-bezier(.2,.9,.2,1) both}
+
+      /* Responsive */
+      @media (max-width:720px){
+        .cookie-wrap{flex-direction:column;align-items:flex-start;padding:14px}
+        .cookie-actions{width:100%;justify-content:space-between}
+      }
     </style>
   </head>
   <body>
@@ -57,99 +90,162 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5PSDCTVV" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
 
-    <!-- Cookie consent banner -->
-    <div id="cookie-banner" style="display:none" role="dialog" aria-live="polite">
-      <div class="content">
-        האתר משתמש בעוגיות לצורך ניתוח ביצועים ושיפור החוויה. האם לאשר שימוש ב‑Google Analytics?
-        <div style="font-size:12px;opacity:0.9;margin-top:6px">ניתן לשנות את ההסכמה בכל עת בדפדפן שלך.</div>
+    <!-- Enhanced Cookie Banner (appears bottom in RTL) -->
+    <div id="cookie-wrap" class="cookie-wrap" role="dialog" aria-live="polite" aria-label="הסכמה לעוגיות" style="display:none">
+      <div class="info">
+        <h4>אנחנו משתמשים בעוגיות כדי לשפר את האתר</h4>
+        <p>אנו משתמשים ב-Google Analytics לאיסוף נתונים אנונימיים על הביצועים והפונקציונליות של האתר. ניתן לבחור אילו שירותים להפעיל.</p>
+        <p style="margin-top:8px;font-size:12px;color:var(--muted)">לפרטיות נוספת: <a href="/privacy-policy" style="color:var(--accent);text-decoration:underline">קרא/י מדיניות פרטיות</a></p>
       </div>
-      <div class="actions">
-        <button class="reject" id="cookie-reject">לדחות</button>
-        <button class="accept" id="cookie-accept">לאשר</button>
+      <div class="cookie-actions">
+        <button class="btn btn-reject" id="cookie-reject">לדחות</button>
+        <button class="btn btn-manage" id="cookie-manage">נהל הגדרות</button>
+        <button class="btn btn-accept" id="cookie-accept">לאשר ולקבל</button>
       </div>
     </div>
-    <!-- End cookie banner -->
+
+    <!-- Settings modal -->
+    <div id="cookie-modal-backdrop" class="cookie-modal-backdrop" aria-hidden="true">
+      <div class="cookie-modal" role="dialog" aria-modal="true" aria-label="ניהול העוגיות">
+        <h3 style="margin:0 0 10px 0;font-family:Heebo, Arial, sans-serif">הגדרות עוגיות</h3>
+        <p style="margin:0 0 16px;color:var(--muted)">בחר אילו קטגוריות של עוגיות לאשר. ניתן לשנות בהמשך בכל עת.</p>
+
+        <div class="modal-row">
+          <div>
+            <div style="font-weight:700">ניתוח (Analytics)</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:4px">מאפשר שליחת נתוני שימוש באנונימי ל‑Google Analytics.</div>
+          </div>
+          <div>
+            <div id="switch-analytics" class="switch" role="switch" aria-checked="false" tabindex="0">
+              <div class="knob"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-row">
+          <div>
+            <div style="font-weight:700">שיווק ותצורה</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:4px">תגים שיווקיים (אין טייג בפועל כעת)</div>
+          </div>
+          <div>
+            <div id="switch-marketing" class="switch" role="switch" aria-checked="false" tabindex="0">
+              <div class="knob"></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px">
+          <button class="btn btn-reject" id="modal-cancel">ביטול</button>
+          <button class="btn btn-accept" id="modal-save">שמור ושמור בחירה</button>
+        </div>
+      </div>
+    </div>
+    <!-- End modal -->
 
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
 
     <script>
-      // Cookie banner logic
       (function(){
-        const banner = document.getElementById('cookie-banner');
+        const STORAGE_KEY = 'site_cookie_consent_v2';
+        const wrap = document.getElementById('cookie-wrap');
         const acceptBtn = document.getElementById('cookie-accept');
         const rejectBtn = document.getElementById('cookie-reject');
-        const STORAGE_KEY = 'site_cookie_consent';
+        const manageBtn = document.getElementById('cookie-manage');
+        const modalBackdrop = document.getElementById('cookie-modal-backdrop');
+        const modalSave = document.getElementById('modal-save');
+        const modalCancel = document.getElementById('modal-cancel');
+        const switchAnalytics = document.getElementById('switch-analytics');
+        const switchMarketing = document.getElementById('switch-marketing');
 
-        function setConsentGranted(){
-          try{
-            // Update gtag consent and dataLayer for GTM
-            if (typeof gtag === 'function'){
-              gtag('consent','update',{
-                'analytics_storage':'granted',
-                'ad_storage':'granted'
-              });
-            }
-            window.dataLayer = window.dataLayer || [];
-            window.dataLayer.push({
-              'event':'consent_update',
-              'gtm.consent':{
-                'ad_storage':'granted',
-                'analytics_storage':'granted'
-              }
-            });
-            localStorage.setItem(STORAGE_KEY,'granted');
-          }catch(e){console.warn('Consent accept error',e)}
+        // helpers
+        function readPrefs(){
+          try{const raw = localStorage.getItem(STORAGE_KEY); return raw? JSON.parse(raw): null}catch(e){return null}
         }
-        function setConsentDenied(){
-          try{
-            if (typeof gtag === 'function'){
-              gtag('consent','update',{
-                'analytics_storage':'denied',
-                'ad_storage':'denied'
-              });
-            }
-            window.dataLayer = window.dataLayer || [];
-            window.dataLayer.push({
-              'event':'consent_update',
-              'gtm.consent':{
-                'ad_storage':'denied',
-                'analytics_storage':'denied'
-              }
-            });
-            localStorage.setItem(STORAGE_KEY,'denied');
-          }catch(e){console.warn('Consent reject error',e)}
+        function savePrefs(prefs){
+          try{localStorage.setItem(STORAGE_KEY, JSON.stringify(prefs));}catch(e){console.warn('Could not save consent',e)}
         }
 
-        // On load: check stored preference
-        document.addEventListener('DOMContentLoaded', function(){
+        function applyPrefs(prefs){
+          // prefs: { analytics: true/false, marketing: true/false }
           try{
-            const pref = localStorage.getItem(STORAGE_KEY);
-            if(pref === 'granted'){
-              // apply granted consent
-              setConsentGranted();
-              banner.style.display = 'none';
-            } else if(pref === 'denied'){
-              setConsentDenied();
-              banner.style.display = 'none';
+            if (prefs.analytics){
+              // grant analytics storage
+              if (typeof gtag === 'function'){
+                gtag('consent','update',{ 'analytics_storage':'granted' });
+                // optionally re-configure or send an event
+                gtag('event','consent_granted',{method:'banner'});
+              }
+              window.dataLayer = window.dataLayer || [];
+              window.dataLayer.push({'event':'consent_update','gtm.consent':{'analytics_storage':'granted','ad_storage':(prefs.marketing? 'granted':'denied')}});
             } else {
-              // show banner
-              banner.style.display = 'flex';
+              if (typeof gtag === 'function'){
+                gtag('consent','update',{ 'analytics_storage':'denied' });
+              }
+              window.dataLayer = window.dataLayer || [];
+              window.dataLayer.push({'event':'consent_update','gtm.consent':{'analytics_storage':'denied','ad_storage':(prefs.marketing? 'granted':'denied')}});
             }
-          }catch(e){
-            // if localStorage blocked, still show banner
-            banner.style.display = 'flex';
+          }catch(e){console.warn('applyPrefs error',e)}
+        }
+
+        function setSwitchState(el, on){
+          if(!el) return; if(on){el.classList.add('on'); el.setAttribute('aria-checked','true')} else {el.classList.remove('on'); el.setAttribute('aria-checked','false')}
+        }
+
+        // initialize
+        document.addEventListener('DOMContentLoaded', function(){
+          const prefs = readPrefs();
+          if(prefs){
+            // apply and hide banner
+            applyPrefs(prefs);
+            if(wrap) wrap.style.display = 'none';
+          } else {
+            if(wrap) wrap.style.display = 'flex';
+          }
+
+          // set initial switches
+          if(prefs){
+            setSwitchState(switchAnalytics, !!prefs.analytics);
+            setSwitchState(switchMarketing, !!prefs.marketing);
           }
         });
 
+        // button handlers
         acceptBtn && acceptBtn.addEventListener('click', function(){
-          setConsentGranted();
-          banner.style.display = 'none';
+          const prefs = { analytics:true, marketing:true };
+          savePrefs(prefs);
+          applyPrefs(prefs);
+          if(wrap) wrap.style.display = 'none';
         });
         rejectBtn && rejectBtn.addEventListener('click', function(){
-          setConsentDenied();
-          banner.style.display = 'none';
+          const prefs = { analytics:false, marketing:false };
+          savePrefs(prefs);
+          applyPrefs(prefs);
+          if(wrap) wrap.style.display = 'none';
         });
+        manageBtn && manageBtn.addEventListener('click', function(){
+          if(modalBackdrop) modalBackdrop.style.display = 'flex';
+          modalBackdrop && modalBackdrop.setAttribute('aria-hidden','false');
+        });
+
+        // modal interactions
+        function toggleSwitch(el){ if(!el) return; const isOn = el.classList.contains('on'); setSwitchState(el, !isOn); }
+        switchAnalytics && switchAnalytics.addEventListener('click', ()=> toggleSwitch(switchAnalytics));
+        switchMarketing && switchMarketing.addEventListener('click', ()=> toggleSwitch(switchMarketing));
+        // keyboard accessibility
+        [switchAnalytics, switchMarketing].forEach(el=>{
+          if(!el) return; el.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggleSwitch(el); } })
+        });
+
+        modalCancel && modalCancel.addEventListener('click', function(){ if(modalBackdrop){ modalBackdrop.style.display = 'none'; modalBackdrop.setAttribute('aria-hidden','true'); } });
+        modalSave && modalSave.addEventListener('click', function(){
+          const prefs = { analytics: switchAnalytics && switchAnalytics.classList.contains('on'), marketing: switchMarketing && switchMarketing.classList.contains('on') };
+          savePrefs(prefs);
+          applyPrefs(prefs);
+          if(modalBackdrop){ modalBackdrop.style.display = 'none'; modalBackdrop.setAttribute('aria-hidden','true'); }
+          if(wrap) wrap.style.display = 'none';
+        });
+
       })();
     </script>
   </body>
