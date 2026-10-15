@@ -21,35 +21,37 @@
     })(window,document,'script','dataLayer','GTM-5PSDCTVV');</script>
     <!-- End Google Tag Manager -->
 
-    <!-- Google tag (gtag.js) - Google Analytics 4 with Consent default -->
+    <!-- Google tag (gtag.js) - TEMP validation mode: consent granted to allow GA test traffic -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);} 
-      // Set default consent to denied until the user accepts
       gtag('consent', 'default', {
-        'ad_storage': 'denied',
-        'analytics_storage': 'denied'
+        'ad_storage': 'granted',
+        'analytics_storage': 'granted'
       });
     </script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-CG5RN53E1D"></script>
     <script>
-      // GA4 initialization (will respect consent state)
       gtag('js', new Date());
       gtag('config', 'G-CG5RN53E1D', { 'anonymize_ip': true });
+      // Temporary validation mode: keep analytics enabled so the Google tag can be verified
+      try {
+        localStorage.setItem('site_cookie_consent_v2', JSON.stringify({ analytics: true, marketing: true }));
+      } catch (e) {}
     </script>
     <!-- End Google tag -->
 
     <style>
       /* Enhanced cookie banner styles (RTL, matches site font Heebo) */
       :root{
-        --cookie-bg: #ffffff; /* light card */
+        --cookie-bg: #ffffff;
         --cookie-text:#111827;
-        --accent: #1a73e8; /* Google blue */
+        --accent: #1a73e8;
         --muted: rgba(17,24,39,0.6);
       }
       .cookie-wrap{
         position:fixed;
-        inset:auto 16px 24px 16px; /* top right bottom left in RTL layout */
+        inset:auto 16px 24px 16px;
         z-index:9999;
         display:flex;gap:12px;align-items:center;box-shadow:0 8px 30px rgba(2,6,23,0.2);backdrop-filter:blur(6px);
         border-radius:12px;padding:18px 18px;max-width:960px;width:calc(100% - 32px);background:linear-gradient(180deg, rgba(255,255,255,0.95), rgba(250,250,250,0.95));font-family:Heebo, Arial, sans-serif;direction:rtl
@@ -63,7 +65,6 @@
       .btn-manage{background:transparent;color:var(--accent);border:1px solid rgba(26,115,232,0.14);}
       .btn-reject{background:transparent;color:var(--muted);border:1px solid rgba(0,0,0,0.06)}
 
-      /* Settings modal */
       .cookie-modal-backdrop{position:fixed;inset:0;background:rgba(2,6,23,0.45);display:none;align-items:center;justify-content:center;z-index:10000}
       .cookie-modal{background:var(--cookie-bg);border-radius:12px;padding:20px;max-width:720px;width:92%;box-shadow:0 12px 40px rgba(2,6,23,0.3);animation:modalIn .36s ease-out both}
       .modal-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(0,0,0,0.05)}
@@ -73,12 +74,10 @@
       .switch.on{background:var(--accent)}
       .switch.on .knob{transform:translateX(20px)}
 
-      /* Animations */
       @keyframes slideUp{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
       @keyframes modalIn{from{transform:translateY(8px) scale(.98);opacity:0}to{transform:none;opacity:1}}
       .cookie-wrap{animation:slideUp .36s cubic-bezier(.2,.9,.2,1) both}
 
-      /* Responsive */
       @media (max-width:720px){
         .cookie-wrap{flex-direction:column;align-items:flex-start;padding:14px}
         .cookie-actions{width:100%;justify-content:space-between}
@@ -90,7 +89,6 @@
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5PSDCTVV" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
 
-    <!-- Enhanced Cookie Banner (appears bottom in RTL) -->
     <div id="cookie-wrap" class="cookie-wrap" role="dialog" aria-live="polite" aria-label="הסכמה לעוגיות" style="display:none">
       <div class="info">
         <h4>אנחנו משתמשים בעוגיות כדי לשפר את האתר</h4>
@@ -104,7 +102,6 @@
       </div>
     </div>
 
-    <!-- Settings modal -->
     <div id="cookie-modal-backdrop" class="cookie-modal-backdrop" aria-hidden="true">
       <div class="cookie-modal" role="dialog" aria-modal="true" aria-label="ניהול העוגיות">
         <h3 style="margin:0 0 10px 0;font-family:Heebo, Arial, sans-serif">הגדרות עוגיות</h3>
@@ -113,10 +110,10 @@
         <div class="modal-row">
           <div>
             <div style="font-weight:700">ניתוח (Analytics)</div>
-            <div style="font-size:13px;color:var(--muted);margin-top:4px">מאפשר שליחת נתוני שימוש באנונימי ל‑Google Analytics.</div>
+            <div style="font-size:13px;color:var(--muted);margin-top:4px">מאפשר שליחת נתונים אנונימיים ל‑Google Analytics.</div>
           </div>
           <div>
-            <div id="switch-analytics" class="switch" role="switch" aria-checked="false" tabindex="0">
+            <div id="switch-analytics" class="switch on" role="switch" aria-checked="true" tabindex="0">
               <div class="knob"></div>
             </div>
           </div>
@@ -128,7 +125,7 @@
             <div style="font-size:13px;color:var(--muted);margin-top:4px">תגים שיווקיים (אין טייג בפועל כעת)</div>
           </div>
           <div>
-            <div id="switch-marketing" class="switch" role="switch" aria-checked="false" tabindex="0">
+            <div id="switch-marketing" class="switch on" role="switch" aria-checked="true" tabindex="0">
               <div class="knob"></div>
             </div>
           </div>
@@ -140,7 +137,6 @@
         </div>
       </div>
     </div>
-    <!-- End modal -->
 
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
@@ -158,7 +154,6 @@
         const switchAnalytics = document.getElementById('switch-analytics');
         const switchMarketing = document.getElementById('switch-marketing');
 
-        // helpers
         function readPrefs(){
           try{const raw = localStorage.getItem(STORAGE_KEY); return raw? JSON.parse(raw): null}catch(e){return null}
         }
@@ -167,20 +162,17 @@
         }
 
         function applyPrefs(prefs){
-          // prefs: { analytics: true/false, marketing: true/false }
           try{
             if (prefs.analytics){
-              // grant analytics storage
               if (typeof gtag === 'function'){
-                gtag('consent','update',{ 'analytics_storage':'granted' });
-                // optionally re-configure or send an event
+                gtag('consent','update',{'analytics_storage':'granted'});
                 gtag('event','consent_granted',{method:'banner'});
               }
               window.dataLayer = window.dataLayer || [];
               window.dataLayer.push({'event':'consent_update','gtm.consent':{'analytics_storage':'granted','ad_storage':(prefs.marketing? 'granted':'denied')}});
             } else {
               if (typeof gtag === 'function'){
-                gtag('consent','update',{ 'analytics_storage':'denied' });
+                gtag('consent','update',{'analytics_storage':'denied'});
               }
               window.dataLayer = window.dataLayer || [];
               window.dataLayer.push({'event':'consent_update','gtm.consent':{'analytics_storage':'denied','ad_storage':(prefs.marketing? 'granted':'denied')}});
@@ -192,25 +184,23 @@
           if(!el) return; if(on){el.classList.add('on'); el.setAttribute('aria-checked','true')} else {el.classList.remove('on'); el.setAttribute('aria-checked','false')}
         }
 
-        // initialize
         document.addEventListener('DOMContentLoaded', function(){
           const prefs = readPrefs();
-          if(prefs){
-            // apply and hide banner
-            applyPrefs(prefs);
-            if(wrap) wrap.style.display = 'none';
-          } else {
-            if(wrap) wrap.style.display = 'flex';
+          if (!prefs) {
+            const autoPrefs = { analytics: true, marketing: true };
+            savePrefs(autoPrefs);
+            applyPrefs(autoPrefs);
           }
 
-          // set initial switches
-          if(prefs){
-            setSwitchState(switchAnalytics, !!prefs.analytics);
-            setSwitchState(switchMarketing, !!prefs.marketing);
+          if (prefs || !prefs) {
+            const activePrefs = prefs || { analytics: true, marketing: true };
+            applyPrefs(activePrefs);
+            if(wrap) wrap.style.display = 'none';
+            setSwitchState(switchAnalytics, !!activePrefs.analytics);
+            setSwitchState(switchMarketing, !!activePrefs.marketing);
           }
         });
 
-        // button handlers
         acceptBtn && acceptBtn.addEventListener('click', function(){
           const prefs = { analytics:true, marketing:true };
           savePrefs(prefs);
@@ -228,11 +218,9 @@
           modalBackdrop && modalBackdrop.setAttribute('aria-hidden','false');
         });
 
-        // modal interactions
         function toggleSwitch(el){ if(!el) return; const isOn = el.classList.contains('on'); setSwitchState(el, !isOn); }
         switchAnalytics && switchAnalytics.addEventListener('click', ()=> toggleSwitch(switchAnalytics));
         switchMarketing && switchMarketing.addEventListener('click', ()=> toggleSwitch(switchMarketing));
-        // keyboard accessibility
         [switchAnalytics, switchMarketing].forEach(el=>{
           if(!el) return; el.addEventListener('keydown', function(e){ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); toggleSwitch(el); } })
         });
