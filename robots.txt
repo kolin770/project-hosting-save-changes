@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://lev-tech.net/sitemap.xml
+Host: lev-tech.net
