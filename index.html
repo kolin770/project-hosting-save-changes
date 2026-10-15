@@ -21,23 +21,136 @@
     })(window,document,'script','dataLayer','GTM-5PSDCTVV');</script>
     <!-- End Google Tag Manager -->
 
-    <!-- Google tag (gtag.js) - Google Analytics 4 -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CG5RN53E1D"></script>
+    <!-- Google tag (gtag.js) - Google Analytics 4 with Consent default -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);} 
+      // Set default consent to denied until the user accepts
+      gtag('consent', 'default', {
+        'ad_storage': 'denied',
+        'analytics_storage': 'denied'
+      });
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CG5RN53E1D"></script>
+    <script>
+      // GA4 initialization (will respect consent state)
       gtag('js', new Date());
-
-      gtag('config', 'G-CG5RN53E1D');
+      gtag('config', 'G-CG5RN53E1D', { 'anonymize_ip': true });
     </script>
     <!-- End Google tag -->
+
+    <style>
+      /* Cookie banner styles (simple, RTL-friendly) */
+      #cookie-banner{
+        position:fixed;left:0;right:0;bottom:0;z-index:9999;display:flex;align-items:center;justify-content:space-between;padding:16px;background:rgba(0,0,0,0.85);color:#fff;font-family:Heebo, Arial, sans-serif;gap:12px;flex-wrap:wrap
+      }
+      #cookie-banner .content{flex:1;min-width:200px}
+      #cookie-banner .actions{display:flex;gap:8px}
+      #cookie-banner button{border:0;padding:10px 14px;border-radius:6px;cursor:pointer;font-weight:600}
+      #cookie-banner .accept{background:#1a73e8;color:#fff}
+      #cookie-banner .reject{background:transparent;color:#fff;border:1px solid rgba(255,255,255,0.2)}
+      @media (max-width:480px){#cookie-banner{padding:12px;font-size:14px}}
+    </style>
   </head>
   <body>
     <!-- Google Tag Manager (noscript) -->
     <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5PSDCTVV" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <!-- End Google Tag Manager (noscript) -->
 
+    <!-- Cookie consent banner -->
+    <div id="cookie-banner" style="display:none" role="dialog" aria-live="polite">
+      <div class="content">
+        האתר משתמש בעוגיות לצורך ניתוח ביצועים ושיפור החוויה. האם לאשר שימוש ב‑Google Analytics?
+        <div style="font-size:12px;opacity:0.9;margin-top:6px">ניתן לשנות את ההסכמה בכל עת בדפדפן שלך.</div>
+      </div>
+      <div class="actions">
+        <button class="reject" id="cookie-reject">לדחות</button>
+        <button class="accept" id="cookie-accept">לאשר</button>
+      </div>
+    </div>
+    <!-- End cookie banner -->
+
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+
+    <script>
+      // Cookie banner logic
+      (function(){
+        const banner = document.getElementById('cookie-banner');
+        const acceptBtn = document.getElementById('cookie-accept');
+        const rejectBtn = document.getElementById('cookie-reject');
+        const STORAGE_KEY = 'site_cookie_consent';
+
+        function setConsentGranted(){
+          try{
+            // Update gtag consent and dataLayer for GTM
+            if (typeof gtag === 'function'){
+              gtag('consent','update',{
+                'analytics_storage':'granted',
+                'ad_storage':'granted'
+              });
+            }
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({
+              'event':'consent_update',
+              'gtm.consent':{
+                'ad_storage':'granted',
+                'analytics_storage':'granted'
+              }
+            });
+            localStorage.setItem(STORAGE_KEY,'granted');
+          }catch(e){console.warn('Consent accept error',e)}
+        }
+        function setConsentDenied(){
+          try{
+            if (typeof gtag === 'function'){
+              gtag('consent','update',{
+                'analytics_storage':'denied',
+                'ad_storage':'denied'
+              });
+            }
+            window.dataLayer = window.dataLayer || [];
+            window.dataLayer.push({
+              'event':'consent_update',
+              'gtm.consent':{
+                'ad_storage':'denied',
+                'analytics_storage':'denied'
+              }
+            });
+            localStorage.setItem(STORAGE_KEY,'denied');
+          }catch(e){console.warn('Consent reject error',e)}
+        }
+
+        // On load: check stored preference
+        document.addEventListener('DOMContentLoaded', function(){
+          try{
+            const pref = localStorage.getItem(STORAGE_KEY);
+            if(pref === 'granted'){
+              // apply granted consent
+              setConsentGranted();
+              banner.style.display = 'none';
+            } else if(pref === 'denied'){
+              setConsentDenied();
+              banner.style.display = 'none';
+            } else {
+              // show banner
+              banner.style.display = 'flex';
+            }
+          }catch(e){
+            // if localStorage blocked, still show banner
+            banner.style.display = 'flex';
+          }
+        });
+
+        acceptBtn && acceptBtn.addEventListener('click', function(){
+          setConsentGranted();
+          banner.style.display = 'none';
+        });
+        rejectBtn && rejectBtn.addEventListener('click', function(){
+          setConsentDenied();
+          banner.style.display = 'none';
+        });
+      })();
+    </script>
   </body>
 </html>
