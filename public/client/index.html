@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>אזור לקוחות — Lev‑Tech</title>
+  <meta name="description" content="אזור לקוחות — כניסה לחשבון WHMCS" />
+  <style>
+    body{font-family:Heebo,Arial,sans-serif;padding:28px;background:#f7fafc;color:#0b2546}
+    .card{max-width:720px;margin:28px auto;background:#fff;padding:22px;border-radius:12px;box-shadow:0 8px 32px rgba(2,6,23,0.08)}
+    h1{margin-top:0}
+    label{display:block;margin-top:12px;font-weight:700}
+    input{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e7eb;margin-top:8px}
+    button{margin-top:16px;padding:10px 14px;border-radius:10px;border:0;background:#1a73e8;color:#fff;font-weight:700;cursor:pointer}
+    .note{margin-top:14px;color:#6b7280;font-size:0.95rem}
+    pre{background:#0f1724;color:#e6eef8;padding:12px;border-radius:8px;overflow:auto}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>אזור לקוחות — Lev‑Tech</h1>
+    <p>כדי להתחבר לאזור הלקוחות (WHMCS), הכנס/י את כתובת הדוא"ל הרשומה בחשבון או את מזהה הלקוח, ולחץ/י על "שלח קישור כניסה". המערכת תיצור קישור כניסה חד‑פעמי דרך ה‑WHMCS.</p>
+
+    <label for="identifier">כתובת דוא"ל או מזהה לקוח</label>
+    <input id="identifier" placeholder="email@example.com או client id" />
+
+    <button id="send">שלח קישור כניסה</button>
+
+    <p class="note">דבר חשוב: העבר הבקשה ל‑Cloudflare Worker מאובטח. יש להגדיר קודם את ה‑Worker ולמקם את הכתובת שלו במשתנה WORKER_URL בקובץ זה (ל‑replace).</p>
+
+    <h3>תוצאה</h3>
+    <pre id="result">---</pre>
+
+    <p class="note">אם אתה מעוניין ב‑iframe מוטמע במקום redirect, יש לוודא ש‑WHMCS מאפשר טעינה ב‑iframe (X‑Frame‑Options).</p>
+  </main>
+
+  <script>
+    // === CONFIG ===
+    // החלף את הכתובת למיקום של ה‑Cloudflare Worker שלך (לא לשים כאן מפתחות)
+    const WORKER_URL = 'https://REPLACE_WITH_YOUR_WORKER_URL.workers.dev/whmcs-login';
+    // === /CONFIG ===
+
+    const sendBtn = document.getElementById('send');
+    const idInput = document.getElementById('identifier');
+    const result = document.getElementById('result');
+
+    sendBtn.addEventListener('click', async ()=>{
+      const id = idInput.value.trim();
+      if(!id){ alert('בבקשה הכנס דוא"ל או מזהה לקוח'); return; }
+      result.textContent = 'שולח בקשה...';
+      try{
+        const resp = await fetch(WORKER_URL, {
+          method:'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ identifier: id })
+        });
+        const data = await resp.json();
+        if(!resp.ok) throw new Error(data.error || JSON.stringify(data));
+        // במקרה של URL כניסה — נציג אותו ונפתח בכרטיסייה חדשה
+        if(data.login_url){
+          result.textContent = 'נוצר קישור כניסה: ' + data.login_url;
+          // פתח בכרטיסייה חדשה
+          window.open(data.login_url, '_blank');
+        } else {
+          result.textContent = JSON.stringify(data, null, 2);
+        }
+      }catch(err){
+        console.error(err);
+        result.textContent = 'שגיאה: ' + (err.message || err);
+      }
+    });
+  </script>
+</body>
+</html>
