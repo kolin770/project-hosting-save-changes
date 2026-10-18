@@ -1,0 +1,39 @@
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",
+  "name": "לב-טק טכנולוגיות",
+  "url": "https://lev-tech.net",
+  "logo": "https://lev-tech.net/logo.png",
+  "image": ["https://lev-tech.net/logo.png"],
+  "telephone": "<+972-XX-XXXXXXX>",
+  "email": "info@lev-tech.net",
+  "priceRange": "₪₪",
+  "address": {
+    "@type": "PostalAddress",
+    "streetAddress": "<רחוב ומספר>",
+    "addressLocality": "<עיר>",
+    "postalCode": "<מיקוד>",
+    "addressCountry": "IL"
+  },
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": 32.0,
+    "longitude": 34.0
+  },
+  "openingHoursSpecification": [
+    {
+      "@type": "OpeningHoursSpecification",
+      "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday"],
+      "opens": "09:00",
+      "closes": "18:00"
+    }
+  ],
+  "sameAs": [
+    "https://www.facebook.com/<your-page>",
+    "https://www.linkedin.com/in/<your-profile>",
+    "https://twitter.com/<your-handle>"
+  ],
+  "description": "אחסון אתרים מנוהל, אחסון WooCommerce, שרתי VPS ושירותי IT מקצועיים – ביצועים, אבטחה ותמיכה בעברית"
+}
+</script>

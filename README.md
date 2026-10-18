@@ -2,6 +2,8 @@
 
 This repository is set up to make lev-tech.net discoverable to search engines and AI crawlers.
 
+Contact: info@lev-tech.net
+
 What I changed:
 - robots.txt: now explicitly allows GPTBot, OAI-SearchBot, Googlebot, GoogleOther, and Bingbot, and includes the sitemap URL.
 - llms.txt: updated to reflect indexing policies and sitemap location.
