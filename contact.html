@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>צור קשר — לב-טק טכנולוגיות</title>
+  <meta name="description" content="צור קשר עם לב-טק טכנולוגיות — טופס פניה מהיר לתמיכה, הצעות מחיר ושאלות." />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;600;700&display=swap">
+  <style>
+    body{font-family:Heebo,Arial, sans-serif;background:#f7fafc;color:#0b2546;padding:24px}
+    .container{max-width:760px;margin:28px auto;background:#fff;padding:22px;border-radius:12px;box-shadow:0 8px 32px rgba(2,6,23,0.06)}
+    h1{margin-top:0;text-align:right}
+    label{display:block;margin-top:12px;font-weight:700;text-align:right}
+    input, textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #e6e7eb;margin-top:8px;font-size:15px;box-sizing:border-box}
+    textarea{min-height:140px;resize:vertical}
+    .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:14px}
+    .btn{background:#1a73e8;color:#fff;padding:10px 16px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:default}
+    .note{margin-top:12px;color:#6b7280;font-size:14px;text-align:right}
+    .error{color:#b91c1c;margin-top:6px;font-size:14px}
+    .success{color:#065f46;margin-top:8px;font-weight:700}
+  </style>
+
+  <!-- Cloudflare Turnstile client script -->
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+</head>
+<body>
+  <main class="container" role="main" aria-labelledby="contact-title">
+    <h1 id="contact-title">צור קשר</h1>
+    <p class="note">מלאו את פרטי ההתקשרות ונחזור אליכם במהרה.</p>
+
+    <form id="contact-form" action="/api/contact" method="POST" novalidate>
+      <label for="name">שם מלא</label>
+      <input id="name" name="name" type="text" required maxlength="100" placeholder="שם מלא">
+
+      <label for="email">כתובת מייל</label>
+      <input id="email" name="email" type="email" required maxlength="254" placeholder="you@example.com">
+
+      <label for="subject">נושא</label>
+      <input id="subject" name="subject" type="text" required maxlength="150" placeholder="נושא הפנייה">
+
+      <label for="message">תוכן</label>
+      <textarea id="message" name="message" required maxlength="5000" placeholder="תיאור קצר של הפנייה"></textarea>
+
+      <!-- honeypot (hidden field) to trap bots -->
+      <div style="display:none">
+        <label>להשאר ריק</label>
+        <input name="website" tabindex="-1" autocomplete="off">
+      </div>
+
+      <!-- Cloudflare Turnstile widget -->
+      <div style="margin-top:16px;text-align:right">
+        <!-- החלף data-sitekey בערך שהתקבלת מ‑Cloudflare Turnstile -->
+        <div class="cf-turnstile" data-sitekey="YOUR_TURNSTILE_SITEKEY"></div>
+      </div>
+
+      <div class="actions">
+        <button id="submit-btn" class="btn" type="submit">שלח</button>
+      </div>
+
+      <div id="form-status" aria-live="polite"></div>
+    </form>
+
+    <p class="note">באמצעות שליחת הטופס אתה מאשר שניצור איתך קשר בדוא"ל או בטלפון בלבד. למידע נוסף ראה <a href="/privacy-policy.html">מדיניות פרטיות</a>.</p>
+  </main>
+
+  <script>
+    (function(){
+      const form = document.getElementById('contact-form');
+      const btn = document.getElementById('submit-btn');
+      const status = document.getElementById('form-status');
+
+      function showError(msg){ status.innerHTML = '<div class="error">'+msg+'</div>'; }
+      function showSuccess(msg){ status.innerHTML = '<div class="success">'+msg+'</div>'; }
+
+      form.addEventListener('submit', async function(e){
+        e.preventDefault();
+        status.innerHTML = '';
+
+        const name = form.name.value.trim();
+        const email = form.email.value.trim();
+        const subject = form.subject.value.trim();
+        const message = form.message.value.trim();
+        const website = form.website ? form.website.value.trim() : '';
+
+        if(website){ showError('נראה שאתה בוט. הטופס נחסם.'); return; }
+
+        if(!name || !email || !subject || !message){
+          showError('מלא/י את כל השדות הנדרשים');
+          return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'שולח...';
+
+        try{
+          const formData = new FormData(form);
+          const resp = await fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin',
+          });
+          const data = await resp.json();
+          if(!resp.ok){
+            showError(data.error || 'שגיאה בשליחת הטופס');
+            btn.disabled = false;
+            btn.textContent = 'שלח';
+            return;
+          }
+          showSuccess(data.message || 'הפנייה נשלחה בהצלחה — נחזור בהקדם');
+          form.reset();
+          if(window.turnstile && window.turnstile.reset) try{ window.turnstile.reset(); }catch(e){}
+        }catch(err){
+          console.error(err);
+          showError('שגיאה ברשת — נסה/י שנית מאוחר יותר');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'שלח';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>
