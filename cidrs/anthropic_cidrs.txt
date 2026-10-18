@@ -1,0 +1,2 @@
+# Anthropic (Claude) CIDRs
+# Anthropic may not publish a stable public JSON of IP ranges. If you obtain an authoritative list, paste ranges here, one per line.

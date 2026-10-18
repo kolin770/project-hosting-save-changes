@@ -1,0 +1,2 @@
+# DeepSeek CIDRs
+# DeepSeek does not publicly publish definitive IP ranges as of creation. Use user-agent and behavioral detection or manually populate.

@@ -1,0 +1,5 @@
+# OpenAI CIDRs
+# This file is populated automatically by scripts/update_cidrs.sh
+# If empty, OpenAI may not have exposed a list at the tried endpoints, or the format changed.
+
+# If the script finds CIDRs they will appear below, one per line.

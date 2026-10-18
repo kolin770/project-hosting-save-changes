@@ -1,0 +1,2 @@
+# Bing CIDRs
+# Populated by scripts/update_cidrs.sh
