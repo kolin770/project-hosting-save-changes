@@ -4,6 +4,8 @@
 
 Generated for LLMs and search engines to help index the site and understand its primary pages.
 
+This repository enables crawling and indexing by major AI crawlers and search engines. The website's robots.txt explicitly allows OpenAI's crawlers (GPTBot, OAI-SearchBot), Google (Googlebot, GoogleOther), and Bing (Bingbot).
+
 Sitemap: https://lev-tech.net/sitemap.xml
 
 Primary pages:
@@ -11,5 +13,5 @@ Primary pages:
 - https://lev-tech.net/index.html — דף הבית (קובץ סטטי).
 
 Notes:
-- הקובץ הזה מיועד לעזור למודלי שפה ומנועי חיפוש להבין את מבנה האתר; יש לשמור אותו מעודכן.
-- ראוי לוודא ש־robots.txt ומפת אתר (sitemap.xml) באתר הראשי מאפשרים זחילה.
+- The repository includes automation scripts (scripts/update_cidrs.sh) to fetch provider cidr lists for firewall allow-lists. These files require manual review before applying to production firewalls.
+- Ensure the robots.txt and sitemap.xml files are served from the root of the production domain (https://lev-tech.net/robots.txt and /sitemap.xml) so crawlers can discover them.

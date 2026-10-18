@@ -1,21 +1,17 @@
-# project-hosting-save-changes
+# AI Indexing & Publication
 
-תיקיית עזר שנועדה לשפר אינדוקס של האתר lev-tech.net על ידי מתן קבצי מטה (llms.txt, sitemap.xml, robots.txt) ונקודת פרסום בריפוזיטורי.
+This repository is set up to make lev-tech.net discoverable to search engines and AI crawlers.
 
-מה יש בריפו:
-- llms.txt — קובץ לתיעוד מהיר של הדפים העיקריים באתר ולסיוע ל־LLMs.
-- sitemap.xml — מפת אתר בסיסית עם העמודים הראשיים.
-- robots.txt — מדיניות זחילה עבור מנועי חיפוש.
+What I changed:
+- robots.txt: now explicitly allows GPTBot, OAI-SearchBot, Googlebot, GoogleOther, and Bingbot, and includes the sitemap URL.
+- llms.txt: updated to reflect indexing policies and sitemap location.
+- scripts/ and cidrs/: contain helper scripts and CIDR files to help maintain firewall allowlists for crawlers (manual review required).
 
-מטרת השינויים:
-- להפוך את המידע לזמין לפועלי זחילה ול־LLMs.
-- להקל על אינדוקס מהיר יותר של האתר.
+Next recommended steps:
+1. Deploy robots.txt and sitemap.xml to the root of https://lev-tech.net/ so crawlers can find them.
+2. Register/submit the sitemap in Google Search Console and Bing Webmaster to accelerate indexing.
+3. Optionally run the scripts/update_cidrs.sh and review cidrs/* files before applying to your firewall or CDN allowlist.
 
-המלצות להמשך:
-1. ודא/י ש־https://lev-tech.net/ מחזיק בקובץ sitemap.xml ו־robots.txt עם גישה תקינה.
-2. הוסף/י את האתר ל‑Google Search Console ו‑Bing Webmaster Tools.
-3. עדכן/י את llms.txt בכל שינוי משמעותי בתוכן או במבנה האתר.
-
-קישורים:
-- האתר: https://lev-tech.net/
-- הקובץ llms.txt בריפו: https://github.com/kolin770/project-hosting-save-changes/blob/main/llms.txt
+If you want, I can also:
+- Prepare a pull request / branch instead of pushing directly to main.
+- Create example Cloudflare rules or AWS Security Group JSON based on the CIDRs we discover.

@@ -1,5 +1,24 @@
 User-agent: *
 Allow: /
 
-# Sitemap for lev-tech.net
+# Explicitly ensure major AI crawlers are allowed
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: GoogleOther
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+# Sitemap location (ensure this URL is served from your domain root)
 Sitemap: https://lev-tech.net/sitemap.xml
+
+# Webmaster contact for crawler issues
+# Email: admin@lev-tech.net
